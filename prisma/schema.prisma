@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  ADMIN
+  MAHASISWA
+}
+
+enum Hari {
+  SENIN
+  SELASA
+  RABU
+  KAMIS
+  JUMAT
+  SABTU
+}
+
+enum Semester {
+  GANJIL
+  GENAP
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  mahasiswa Mahasiswa?
+
+  @@map("users")
+}
+
+model Dosen {
+  nidn      String   @id
+  nama      String
+  email     String   @unique
+  telepon   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  penjadwalan Penjadwalan[]
+
+  @@map("dosen")
+}
+
+model Matakuliah {
+  id          String   @id @default(uuid())
+  kode        String   @unique
+  nama        String
+  sks         Int
+  semester    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relasi
+  penjadwalan Penjadwalan[]
+
+  @@map("matakuliah")
+}
+
+model Mahasiswa {
+  nim         String   @id
+  nama        String
+  email       String   @unique
+  telepon     String?
+  angkatan    String
+  userId      String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relasi
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mahasiswaPenjadwalan MahasiswaPenjadwalan[]
+
+  @@map("mahasiswa")
+}
+
+model Penjadwalan {
+  id            String   @id @default(uuid())
+  matakuliahId  String
+  dosenNidn     String
+  ruangan       String
+  hari          Hari
+  jamMulai      String
+  jamSelesai    String
+  tahunAjaran   String
+  semester      Semester
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relasi
+  matakuliah           Matakuliah             @relation(fields: [matakuliahId], references: [id], onDelete: Cascade)
+  dosen                Dosen                  @relation(fields: [dosenNidn], references: [nidn], onDelete: Cascade)
+  mahasiswaPenjadwalan MahasiswaPenjadwalan[]
+
+  @@map("penjadwalan")
+}
+
+model MahasiswaPenjadwalan {
+  id             String   @id @default(uuid())
+  mahasiswaNim   String
+  penjadwalanId  String
+  createdAt      DateTime @default(now())
+
+  // Relasi
+  mahasiswa   Mahasiswa   @relation(fields: [mahasiswaNim], references: [nim], onDelete: Cascade)
+  penjadwalan Penjadwalan @relation(fields: [penjadwalanId], references: [id], onDelete: Cascade)
+
+  @@unique([mahasiswaNim, penjadwalanId])
+  @@map("mahasiswa_penjadwalan")
+}
